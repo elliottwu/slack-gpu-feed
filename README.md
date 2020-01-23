@@ -1,2 +1,3 @@
-# slack-gpu-feed
-Automatic Slurm GPU status feed on slack
+# Slack GPU feed
+
+The code for automatic Slurm GPU status feed on Slack.
