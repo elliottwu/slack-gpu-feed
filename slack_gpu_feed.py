@@ -23,10 +23,11 @@ def push_msg():
     num_wait = 0
     total_num_gpu = 0
     total_num_job = 0
-    lines = subprocess.run(['squeue', '-o "%u %P %t %b"'], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')
+    total_num_bash = 0
+    lines = subprocess.run(['squeue', '-o "%u %P %t %b %j"'], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')
     for line in lines:
         if 'gpu' in line:
-            username, pty, state, num_gpu = line.strip().strip('"').split(' ')
+            username, pty, state, num_gpu, name = line.strip().strip('"').split(' ')
             if state == 'PD':
                 num_wait += 1
                 continue
@@ -39,20 +40,24 @@ def push_msg():
                 num_gpu = int(num_gpu[-1])
 
                 if username not in all_results:
-                    all_results[username] = [0,0]
+                    all_results[username] = [0,0,0]
                 all_results[username][0] += num_gpu
                 all_results[username][1] += 1
                 total_num_gpu += num_gpu
                 total_num_job += 1
+
+                if name == 'bash' or name == 'sh':
+                    all_results[username][2] += 1
+                    total_num_bash += 1
 
     all_results = sorted(all_results.items(), key=lambda kv: kv[1][0], reverse=True)
 
     out_msg = 'The GPU Leaderboard :slightly_smiling_face:\n'
     out_msg += '```AT: %s\n' %(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
     out_msg += '=======================\n'
-    out_msg += '%-*s%-*s%s\n' %(12, 'USER', 7, '#GPU', '#JOB')
-    out_msg += '\n'.join(['%-*s%-*d%d'%(12, disguise(username)+':', 7, num_gpu, num_job) for username, (num_gpu, num_job) in all_results])
-    out_msg += '\n%-*s%-*d%d' %(12, 'TOTAL:', 7, total_num_gpu, total_num_job)
+    out_msg += '%-*s%-*s%-*s%s\n' %(12, 'USER', 7, '#GPU', 7, '#JOB', '#BASH')
+    out_msg += '\n'.join(['%-*s%-*d%-*d%d'%(12, disguise(username)+':', 7, num_gpu, 7, num_job, num_bash) for username, (num_gpu, num_job, num_bash) in all_results])
+    out_msg += '\n%-*s%-*d%-*d%d' %(12, 'TOTAL:', 7, total_num_gpu, 7, total_num_job, total_num_bash)
     out_msg += '\n\n%-*s%d'%(19, '#jobs awaiting:', num_wait)
     out_msg += '\n=======================```'
 
