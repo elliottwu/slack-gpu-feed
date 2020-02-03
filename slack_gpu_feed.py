@@ -46,7 +46,7 @@ def push_msg():
                 total_num_gpu += num_gpu
                 total_num_job += 1
 
-                if name == 'bash' or name == 'sh':
+                if name == 'bash' or name == 'sh' or name == 'zsh':
                     all_results[username][2] += 1
                     total_num_bash += 1
 
@@ -54,12 +54,12 @@ def push_msg():
 
     out_msg = 'The GPU Leaderboard :slightly_smiling_face:\n'
     out_msg += '```AT: %s\n' %(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
-    out_msg += '=======================\n'
+    out_msg += '===============================\n'
     out_msg += '%-*s%-*s%-*s%s\n' %(12, 'USER', 7, '#GPU', 7, '#JOB', '#BASH')
     out_msg += '\n'.join(['%-*s%-*d%-*d%d'%(12, disguise(username)+':', 7, num_gpu, 7, num_job, num_bash) for username, (num_gpu, num_job, num_bash) in all_results])
     out_msg += '\n%-*s%-*d%-*d%d' %(12, 'TOTAL:', 7, total_num_gpu, 7, total_num_job, total_num_bash)
     out_msg += '\n\n%-*s%d'%(19, '#jobs awaiting:', num_wait)
-    out_msg += '\n=======================```'
+    out_msg += '\n===============================```'
 
     results = client.chat_postMessage(
       channel=channel_id,
