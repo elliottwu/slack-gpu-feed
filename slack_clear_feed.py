@@ -5,6 +5,7 @@ import slack
 slack_token = os.environ["SLACK_API_TOKEN"]
 client = slack.WebClient(token=slack_token)
 channel_id = 'CQ3AMSQKA'  # gpu-leaderboard
+# channel_id = 'C01D5SJ4PBN'  # gpu-leaderboard-debug
 
 for msg in client.channels_history(channel=channel_id).data['messages']:
     if 'GPU Leaderboard' in msg['text']:
