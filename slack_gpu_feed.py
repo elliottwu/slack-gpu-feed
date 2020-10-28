@@ -29,7 +29,7 @@ def get_warnings(gpustats, limit, slack_id_path):
         if '[total: ' in line:
             user, _, num_gpu = line.split()[:3]
             if int(num_gpu) > limit:
-                warning_users.append(slack_ids[user])
+                warning_users.append(slack_ids.get(user, user))
     if warning_users:
         warning_msg = '\n:warning: These users have exceeded the GPU limit of %d per user: ' %limit
         warning_msg += ' '.join(['<@'+u+'>' for u in warning_users]) + '.'
