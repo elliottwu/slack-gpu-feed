@@ -22,7 +22,7 @@ def get_slack_ids(path):
         slack_ids[username] = slack_id
     return slack_ids
 
-def get_warnings(gpustats, limit, slack_id_path):
+def get_warnings(gpustats, limit, avail_thres, slack_id_path):
     slack_ids = get_slack_ids(slack_id_path)
     warning_users = []
     for line in gpustats.split('\n'):
@@ -30,10 +30,12 @@ def get_warnings(gpustats, limit, slack_id_path):
             user, _, num_gpu = line.split()[:3]
             if int(num_gpu) > limit:
                 warning_users.append(slack_ids.get(user, user))
-    if warning_users:
-        warning_msg = '\n:warning: These users have exceeded the GPU limit of %d per user: ' %limit
-        warning_msg += ' '.join(['<@'+u+'>' for u in warning_users]) + '.'
-        warning_msg += '\nPlease reduce the usage in order to give fair access to everyone! (Read: https://uox-vggrobots.slack.com/archives/C0SQQMBLN/p1603701994063500)'
+        elif ' gpus available:' in line:
+            _, _, num_avail_gpu = line.split()[:3]
+    if (int(num_avail_gpu) < avail_thres) and warning_users:
+        warning_msg = '\n:warning: These users have exceeded the limit of %d GPUs per user: ' %limit
+        warning_msg += ' '.join(['<@'+u+'>' for u in warning_users]) + '. '
+        warning_msg += 'As less than %d GPUs are available, please reduce the usage in order to give fair access to others!' %avail_thres
     else:
         warning_msg = ''
     return warning_msg
@@ -53,7 +55,7 @@ def push_msg(args):
     out_msg += gpustats + '```'
 
     if args.limit >= 0 and args.slack_id_path is not None and os.path.isfile(args.slack_id_path):
-        out_msg += get_warnings(gpustats, args.limit, args.slack_id_path)
+        out_msg += get_warnings(gpustats, args.limit, args.avail_thres, args.slack_id_path)
 
     results = client.chat_postMessage(
       channel=channel_id,
@@ -64,6 +66,7 @@ def push_msg(args):
 def run():
     parser = argparse.ArgumentParser()
     parser.add_argument('--limit', type=int, default=12, help='limit to number of GPUs per user, supply a posive number to trigger warnings')
+    parser.add_argument('--avail_thres', type=int, default=12, help='threshold of number of GPUs available to trigger warinings')
     parser.add_argument('--slack_id_path', type=str, default='./slack_ids.txt', help='path to the file containing matches of usernames and Slack IDs')
     args = parser.parse_args()
 
